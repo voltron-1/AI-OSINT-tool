@@ -31,6 +31,7 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 - [x] **Backlog created, then restructured** — 6 milestones, 54 issues (6 `user-story` parents + 48 children), one issue per numbered plan step. The first cut derived from the README; it was rewritten in place once `implementation-plan.md` was committed, so no issue was orphaned or closed as superseded.
 - [x] **Project board** — [#24](https://github.com/users/voltron-1/projects/24), copied from the Suburban_SOC board so all nine automations, the five views, and the Status/Priority/Size/Estimate fields carried over. 54 items classified.
 - [x] **Wiki** — [Home](https://github.com/voltron-1/AI-OSINT-tool/wiki) and [Architecture](https://github.com/voltron-1/AI-OSINT-tool/wiki/Architecture) written (wiki commit `b1b85fa`), replacing the one-line stub.
+- [x] **Guardrail gaps filed** — the four controls from `OSINT_LLM_Guardrails_Framework.docx` that had no backlog item: [#58](https://github.com/voltron-1/AI-OSINT-tool/issues/58) PII masking on ingest and [#59](https://github.com/voltron-1/AI-OSINT-tool/issues/59) proxy/egress tiers under M4, [#60](https://github.com/voltron-1/AI-OSINT-tool/issues/60) entity-correlation hop cap under M5, [#61](https://github.com/voltron-1/AI-OSINT-tool/issues/61) standardized confidence rating under M6. The [Architecture wiki page](https://github.com/voltron-1/AI-OSINT-tool/wiki/Architecture#guardrail-mapping) now maps every pillar to planned work (wiki commit `029cdc0`). Backlog: 58 issues.
 - [x] **Docs committed** — `implementation-plan.md` (`4820537`), `OSINT_LLM_Guardrails_Framework.docx` (`a1d536f`).
 
 ---
@@ -42,9 +43,9 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 | [M1 - Phase 0: Scaffold — Registration & DCV Gate Access](https://github.com/voltron-1/AI-OSINT-tool/milestone/1) | 0/8 | Postgres+AGE init, targets table, DCV (DNS TXT / HTTP file / WHOIS email), connector base with the `dcv_verified` guard, Provenance + STIX model, wire-up |
 | [M2 - Phase 1: Lane 1 Vertical Slice — First Real Exposure Report](https://github.com/voltron-1/AI-OSINT-tool/milestone/2) | 0/13 | Nine Lane 1 connectors, entity resolution into the graph, Ollama enrichment, analyst UI and one-page exposure report |
 | [M3 - Phase 2: Lane 2 — First Lookalike-Domain Alert](https://github.com/voltron-1/AI-OSINT-tool/milestone/3) | 0/7 | Typosquat engine, lookalike-cert alerting, newly-registered-domain and phishing-feed cross-reference, optional visual clone detection, spoofability verdict |
-| [M4 - Cross-Cutting Hardening — Before a Second Real Target](https://github.com/voltron-1/AI-OSINT-tool/milestone/4) | 0/7 | Ollama loopback bind, API/UI auth, ToS enforcement, template auto-update, scanner self-identification, human-dispatched remediation packets |
-| [M5 - Autonomous Investigation Mode — First Bounded Run](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) | 0/6 | Trigger and context loader, read-only tool wrappers, scope guard against the target's own graph, bounded loop (25 actions / 20 minutes), output re-entry |
-| [M6 - Phase 3 + Phase 4: Gap-Driven Hardening & AI GRC](https://github.com/voltron-1/AI-OSINT-tool/milestone/6) | 0/13 | Delta intelligence, campaign clustering, feedback-calibrated triage, Ed25519 authorization ledger, canary tokens; audit trail, model card, accuracy review, NIST AI RMF, roles, prompt isolation, retention |
+| [M4 - Cross-Cutting Hardening — Before a Second Real Target](https://github.com/voltron-1/AI-OSINT-tool/milestone/4) | 0/9 | Ollama loopback bind, API/UI auth, ToS enforcement, template auto-update, scanner self-identification, human-dispatched remediation packets, PII masking, proxy/egress tiers |
+| [M5 - Autonomous Investigation Mode — First Bounded Run](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) | 0/7 | Trigger and context loader, read-only tool wrappers, scope guard against the target's own graph, bounded loop (25 actions / 20 minutes / 3 hops), output re-entry |
+| [M6 - Phase 3 + Phase 4: Gap-Driven Hardening & AI GRC](https://github.com/voltron-1/AI-OSINT-tool/milestone/6) | 0/14 | Delta intelligence, campaign clustering, feedback-calibrated triage, Ed25519 authorization ledger, canary tokens; audit trail, model card, accuracy review, NIST AI RMF, roles, prompt isolation, retention, confidence rating |
 
 ### M1 - Phase 0: Scaffold — Registration & DCV Gate Access
 
@@ -94,7 +95,7 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 
 ### M4 - Cross-Cutting Hardening — Before a Second Real Target
 
-[Milestone 4](https://github.com/voltron-1/AI-OSINT-tool/milestone/4) · user story [#29](https://github.com/voltron-1/AI-OSINT-tool/issues/29) · P1 · 0/6 child issues done
+[Milestone 4](https://github.com/voltron-1/AI-OSINT-tool/milestone/4) · user story [#29](https://github.com/voltron-1/AI-OSINT-tool/issues/29) · P1 · 0/8 child issues done
 
 [ ] **[#29](https://github.com/voltron-1/AI-OSINT-tool/issues/29)** — US: Cross-cutting hardening in place before anything touches a second real target
 
@@ -104,10 +105,12 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 - [ ] [#33](https://github.com/voltron-1/AI-OSINT-tool/issues/33) — Hardening: scheduled template auto-update for nuclei and subfinder
 - [ ] [#34](https://github.com/voltron-1/AI-OSINT-tool/issues/34) — Hardening: scanner self-identification — distinct User-Agent + contact/opt-out URL on all outbound requests, throttled to target size
 - [ ] [#35](https://github.com/voltron-1/AI-OSINT-tool/issues/35) — Hardening: remediation packet generation — evidence + disclosure/abuse-report template, human-dispatched only
+- [ ] [#58](https://github.com/voltron-1/AI-OSINT-tool/issues/58) — Guardrail: automated PII masking on ingest — NER scrubbing of collateral identifiers before storage
+- [ ] [#59](https://github.com/voltron-1/AI-OSINT-tool/issues/59) — Guardrail: route connector egress through configurable proxy tiers to prevent operational IP disclosure
 
 ### M5 - Autonomous Investigation Mode — First Bounded Run
 
-[Milestone 5](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) · user story [#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36) · P2 · 0/5 child issues done
+[Milestone 5](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) · user story [#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36) · P2 · 0/6 child issues done
 
 [ ] **[#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36)** — US: First bounded autonomous investigative run with stop conditions verified
 
@@ -116,10 +119,11 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 - [ ] [#39](https://github.com/voltron-1/AI-OSINT-tool/issues/39) — 8.3 Scope enforcement (app/autonomous/scope_guard.py): refuse and log any entity not tied to the target's own AGE graph
 - [ ] [#40](https://github.com/voltron-1/AI-OSINT-tool/issues/40) — 8.4 Loop + stop conditions (app/autonomous/loop.py): max_actions=25, max_duration_minutes=20, no-more-leads
 - [ ] [#41](https://github.com/voltron-1/AI-OSINT-tool/issues/41) — 8.5 Output handling: route autonomous findings through normalize → STIX → provenance → graph → triage, no separate storage
+- [ ] [#60](https://github.com/voltron-1/AI-OSINT-tool/issues/60) — Guardrail: cap entity-correlation depth in the autonomous loop (recursion maximum, e.g. 3 hops)
 
 ### M6 - Phase 3 + Phase 4: Gap-Driven Hardening & AI GRC
 
-[Milestone 6](https://github.com/voltron-1/AI-OSINT-tool/milestone/6) · user story [#42](https://github.com/voltron-1/AI-OSINT-tool/issues/42) · P2 · 0/12 child issues done
+[Milestone 6](https://github.com/voltron-1/AI-OSINT-tool/milestone/6) · user story [#42](https://github.com/voltron-1/AI-OSINT-tool/issues/42) · P2 · 0/13 child issues done
 
 [ ] **[#42](https://github.com/voltron-1/AI-OSINT-tool/issues/42)** — US: Hardening and governance layered on a working system (Phase 3 + Phase 4)
 
@@ -135,6 +139,7 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 - [ ] [#52](https://github.com/voltron-1/AI-OSINT-tool/issues/52) — 10.6 Roles and permissions (app/auth/roles.py): register / scan / view / override split
 - [ ] [#53](https://github.com/voltron-1/AI-OSINT-tool/issues/53) — 10.7 Prompt-injection isolation at every prompt-construction point in app/enrichment/ and app/autonomous/: untrusted content never mixed into instruction context
 - [ ] [#54](https://github.com/voltron-1/AI-OSINT-tool/issues/54) — 10.8 Retention (app/data/retention.py): retention period per finding class, automated purge/archival job
+- [ ] [#61](https://github.com/voltron-1/AI-OSINT-tool/issues/61) — Guardrail: standardized confidence rating on every analytical assessment (Admiralty Code or High/Medium/Low)
 
 ---
 
@@ -144,11 +149,16 @@ Waiting on an external event or a prerequisite outside the current phase — not
 
 | Item | Waiting on |
 |---|---|
-| [M5 — Autonomous Investigation Mode](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) (issues [#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36)–[#41](https://github.com/voltron-1/AI-OSINT-tool/issues/41)) | M2 running against at least one real domain. The plan is explicit: the loop needs real findings to be worth building against, not a stub. |
+| [M5 — Autonomous Investigation Mode](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) (issues [#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36)–[#41](https://github.com/voltron-1/AI-OSINT-tool/issues/41), [#60](https://github.com/voltron-1/AI-OSINT-tool/issues/60)) | M2 running against at least one real domain. The plan is explicit: the loop needs real findings to be worth building against, not a stub. |
 | pip-audit and Trivy image scan doing real work | A requirements file and `ai-osint-tool/app/Dockerfile` (step 0.6, [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7)). Both jobs currently emit a `::warning::` and skip. |
 | Branch protection ruleset on `main` | Owner action. The CI checks exist but none is required, so a direct push to `main` bypasses them. Recommended required checks: `Lint / *`, `Secret Scan / gitleaks`, `Security Scan / *`, `CodeQL Advanced / Analyze (python)`. See `findings/20260904-ci-workflows-security.md`. |
 | "Require approval for all external contributors" | Owner action, repo setting. Public repo; a fork PR can execute code via `docker build` and mypy config discovery. |
-| Guardrail gaps with no backlog item | Four controls from `OSINT_LLM_Guardrails_Framework.docx` are unfiled: automated PII masking on ingest, proxy/egress tiers for OPSEC, a structured confidence rating (Admiralty or High/Medium/Low), and an explicit hop cap on entity correlation. Mapped in the [Architecture wiki page](https://github.com/voltron-1/AI-OSINT-tool/wiki/Architecture#guardrail-mapping). File under M4 and M6 when scoped. |
+
+## OPEN PULL REQUESTS
+
+| PR | Source |
+|---|---|
+| [#56](https://github.com/voltron-1/AI-OSINT-tool/pull/56), [#57](https://github.com/voltron-1/AI-OSINT-tool/pull/57) | Dependabot — `github/codeql-action` 4.36.2 → 4.37.9. Opened automatically by the `dependabot.yml` added in PR #55; confirms the update channel works. |
 
 ## BLOCKED
 
