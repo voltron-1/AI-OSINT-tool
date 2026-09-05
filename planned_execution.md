@@ -12,20 +12,30 @@ Board: [AI OSINT Tool](https://github.com/users/voltron-1/projects/24) · Wiki: 
 
 ## NEXT UP
 
-**Phase 0 (M1) — Authorization foundation. Next unstarted item: [#2](https://github.com/voltron-1/AI-OSINT-tool/issues/2) — 0.1 Postgres schema + AGE extension** (`app/db/init.sql`, compose init-script mount). Done when `docker compose up db` starts clean and `SELECT * FROM ag_catalog.ag_graph;` shows the graph.
+**Phase 0 (M1) — Authorization foundation. Next unstarted item: [#3](https://github.com/voltron-1/AI-OSINT-tool/issues/3) — 0.2 Authorized-targets table + registration endpoint** (`app/models/target.py`, `app/api/targets.py`). Done when registering a target returns `pending`, and the connector check already exists as a no-op guard.
 
-Nothing in the application is implemented yet. `connectors/base.py` is a stub, `app/` holds only a `.gitkeep`, so `docker compose up` cannot build until [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7) (0.6) lands the Dockerfile and entrypoint.
+[#65](https://github.com/voltron-1/AI-OSINT-tool/issues/65) lands with it, not after it. #3 opens the first database connection, and it should be opened as a non-superuser role rather than retrofitted once nine connectors are writing to the graph.
+
+The database is real now: `docker compose up db` brings up PostgreSQL 18.6 with AGE, the `osint` graph, and `scripts/verify-db.sh` to prove it. There is still no application code — `connectors/base.py` is a stub and `app/` holds only `db/init.sql` — so `docker compose up` cannot build the app service until [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7) (0.6) lands the Dockerfile and entrypoint.
 
 **Phases are sequential.** No Phase 1 connector (M2) starts before M1's registry and DCV actually reject an unauthorized target. M5 (autonomous mode) does not start until M2 has run against at least one real domain — the plan's own condition.
 
 **Work order inside M1** (one PR per issue, each through implement → parallel security-auditor + code-reviewer review → verify → PR → CI → merge → update this doc → commit+push):
-[#2](https://github.com/voltron-1/AI-OSINT-tool/issues/2) → [#3](https://github.com/voltron-1/AI-OSINT-tool/issues/3) → [#4](https://github.com/voltron-1/AI-OSINT-tool/issues/4) → [#5](https://github.com/voltron-1/AI-OSINT-tool/issues/5) → [#6](https://github.com/voltron-1/AI-OSINT-tool/issues/6) → [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7) → [#8](https://github.com/voltron-1/AI-OSINT-tool/issues/8)
+~~[#2](https://github.com/voltron-1/AI-OSINT-tool/issues/2)~~ → [#3](https://github.com/voltron-1/AI-OSINT-tool/issues/3) + [#65](https://github.com/voltron-1/AI-OSINT-tool/issues/65) → [#4](https://github.com/voltron-1/AI-OSINT-tool/issues/4) → [#5](https://github.com/voltron-1/AI-OSINT-tool/issues/5) → [#6](https://github.com/voltron-1/AI-OSINT-tool/issues/6) → [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7) → [#8](https://github.com/voltron-1/AI-OSINT-tool/issues/8)
 
 That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not negotiable downward: 0.4's `dcv_verified` guard has nothing to guard until 0.3 lands, and 0.6's wire-up needs 0.5's provenance model.
 
 ## LAST SESSION
 
-**2026-09-05** — layout and CI-config corrections. Still no application code.
+**2026-09-05 (later)** — first application artifact. The database actually comes up.
+
+- [x] **0.1 Postgres schema + AGE extension** — [PR #64](https://github.com/voltron-1/AI-OSINT-tool/pull/64), squash-merged `1ca294e`, closing [#2](https://github.com/voltron-1/AI-OSINT-tool/issues/2). `app/db/init.sql` enables AGE, pins the session defaults every later connection needs, and creates the `osint` graph. `scripts/verify-db.sh` runs the issue's two done-when checks plus two regression guards, under its own compose project so it cannot reach the operator's `db_data`. All 12 CI checks green. Reviewed by security-auditor and code-reviewer in parallel — 11 findings fixed, 4 closed with evidence, dispositions in `findings/20260905-0.1-db-schema.md`.
+  - **The stack would not start, and that was the real find.** `apache/age:latest` moved to a PostgreSQL 18 base on 2026-08-20, relocating `PGDATA` to `/var/lib/postgresql/18/docker`; the image refuses to start against a mount at the old `/var/lib/postgresql/data` path, which is exactly what this compose file already had. Fixed by mounting the parent per upstream guidance and pinning to `release_PG18_1.8.0` plus its digest. `.github/dependabot.yml` gains a `docker` ecosystem, and the tag stays beside the digest because Dependabot cannot bump a digest that has no tag to compare against.
+  - **`search_path` took two passes.** Listing `ag_catalog` first would have landed #3's `targets` table inside AGE's extension schema. The reviewer's recommended fix — `"$user", public, ag_catalog` — then failed the new guard: `create_graph('osint')` creates a schema named after the graph and `POSTGRES_USER` is also `osint`, so `"$user"` resolved to the graph's own schema, where `drop_graph` would have removed the tables. Final path is `public, ag_catalog`, with both halves of the trade-off asserted in `verify-db.sh`.
+- [x] **[#65](https://github.com/voltron-1/AI-OSINT-tool/issues/65) filed** — the application will connect as a database superuser, which turns any future SQL injection into a `COPY ... FROM PROGRAM` command-execution path, on a tool whose whole job is ingesting attacker-influenced CT, WHOIS and page content. M1, sub-issue of [#1](https://github.com/voltron-1/AI-OSINT-tool/issues/1), sequenced with #3.
+- [x] **Board [#24](https://github.com/users/voltron-1/projects/24) reconciled** — 59/59 items carry Status, Priority, Size and a milestone. No second board created: #24 already is the agile board, with the five views and the Backlog/Ready/In progress/In review/Done pipeline.
+
+**2026-09-05 (earlier)** — layout and CI-config corrections. Still no application code.
 
 - [x] **Repo layout flattened** — [PR #63](https://github.com/voltron-1/AI-OSINT-tool/pull/63), merged `c9428cb`. Content sat one level down in `ai-osint-tool/` inside a repo of the same name, contradicting the implementation plan every issue is written against (it uses root-relative paths throughout). README, LICENSE, compose, `.env.example`, `app/`, `connectors/`, `docs/`, `scripts/` moved to the root; the two `.gitignore` files merged; every path rewritten in the workflows, CODEOWNERS, dependabot.yml and this doc. Two references would have broken outright: the compose job's env copy and Trivy's `scan-ref`.
 - [x] **Dependabot config fixed, two CI failures resolved** — both were defects in the `dependabot.yml` shipped in PR #55.
@@ -47,7 +57,7 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 
 | Milestone | Done | Scope |
 |---|---|---|
-| [M1 - Phase 0: Scaffold — Registration & DCV Gate Access](https://github.com/voltron-1/AI-OSINT-tool/milestone/1) | 0/8 | Postgres+AGE init, targets table, DCV (DNS TXT / HTTP file / WHOIS email), connector base with the `dcv_verified` guard, Provenance + STIX model, wire-up |
+| [M1 - Phase 0: Scaffold — Registration & DCV Gate Access](https://github.com/voltron-1/AI-OSINT-tool/milestone/1) | 1/9 | Postgres+AGE init, targets table, DCV (DNS TXT / HTTP file / WHOIS email), connector base with the `dcv_verified` guard, Provenance + STIX model, wire-up |
 | [M2 - Phase 1: Lane 1 Vertical Slice — First Real Exposure Report](https://github.com/voltron-1/AI-OSINT-tool/milestone/2) | 0/13 | Nine Lane 1 connectors, entity resolution into the graph, Ollama enrichment, analyst UI and one-page exposure report |
 | [M3 - Phase 2: Lane 2 — First Lookalike-Domain Alert](https://github.com/voltron-1/AI-OSINT-tool/milestone/3) | 0/7 | Typosquat engine, lookalike-cert alerting, newly-registered-domain and phishing-feed cross-reference, optional visual clone detection, spoofability verdict |
 | [M4 - Cross-Cutting Hardening — Before a Second Real Target](https://github.com/voltron-1/AI-OSINT-tool/milestone/4) | 0/9 | Ollama loopback bind, API/UI auth, ToS enforcement, template auto-update, scanner self-identification, human-dispatched remediation packets, PII masking, proxy/egress tiers |
@@ -56,12 +66,13 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 
 ### M1 - Phase 0: Scaffold — Registration & DCV Gate Access
 
-[Milestone 1](https://github.com/voltron-1/AI-OSINT-tool/milestone/1) · user story [#1](https://github.com/voltron-1/AI-OSINT-tool/issues/1) · P0 · 0/7 child issues done
+[Milestone 1](https://github.com/voltron-1/AI-OSINT-tool/milestone/1) · user story [#1](https://github.com/voltron-1/AI-OSINT-tool/issues/1) · P0 · 1/8 child issues done
 
 [ ] **[#1](https://github.com/voltron-1/AI-OSINT-tool/issues/1)** — US: Registration and DCV actually gate access (Phase 0 complete)
 
-- [ ] [#2](https://github.com/voltron-1/AI-OSINT-tool/issues/2) — 0.1 Postgres schema + AGE extension: init.sql and compose init-script mount
+- [x] [#2](https://github.com/voltron-1/AI-OSINT-tool/issues/2) — 0.1 Postgres schema + AGE extension: init.sql and compose init-script mount — [PR #64](https://github.com/voltron-1/AI-OSINT-tool/pull/64)
 - [ ] [#3](https://github.com/voltron-1/AI-OSINT-tool/issues/3) — 0.2 Authorized-targets table + registration endpoint (POST /targets, GET /targets/{id})
+- [ ] [#65](https://github.com/voltron-1/AI-OSINT-tool/issues/65) — Hardening: non-superuser `osint_app` role, so the first connection #3 opens is not a superuser one
 - [ ] [#4](https://github.com/voltron-1/AI-OSINT-tool/issues/4) — 0.3 Domain control validation: DNS TXT, HTTP file, and WHOIS-contact email proofs (POST /targets/{id}/verify)
 - [ ] [#5](https://github.com/voltron-1/AI-OSINT-tool/issues/5) — 0.4 Connector base class: rate limiter, retry/backoff, ToS metadata, and dcv_verified guard
 - [ ] [#6](https://github.com/voltron-1/AI-OSINT-tool/issues/6) — 0.5 Provenance + STIX 2.1 object model (domain-name, ipv4-addr, x509-certificate, indicator)
@@ -171,4 +182,5 @@ None.
 
 - **Conventions mirrored from Suburban_SOC**, at the owner's request: milestone naming, `user-story` parents with As-a/I-want/So-that + acceptance criteria, `priority:*` labels, board fields and automations, wiki structure, and the CI workflow set. Project-specific labels added: `authorization`, `connector`, `ai-triage`, `governance`.
 - **CI follow-ups not taken** in PR #55, recorded in `findings/20260904-ci-workflows-security.md`: SARIF upload for Trivy findings, `SECURITY.md`, dependency-review action, OpenSSF Scorecard, harden-runner, and the image-scan severity policy (kept at CRITICAL with `ignore-unfixed`, as mirrored).
+- **GitHub's milestone counters are drifting.** M2's milestone object reports `open_issues=5` while 13 issues genuinely carry that milestone (checked per issue). The per-issue data is ground truth, so the milestone progress bar in the GitHub UI understates M2. Counts in this document are derived from issue membership, not from those counters.
 - **Working files** under `plans/`, `logs/`, and `findings/` are session artifacts, not deliverables.
