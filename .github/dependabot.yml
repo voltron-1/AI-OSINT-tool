@@ -8,6 +8,24 @@ updates:
     schedule:
       interval: weekly
     labels: [dependencies]
+    groups:
+      # github/codeql-action/init and .../analyze are separate dependencies to
+      # Dependabot but one action at runtime: init writes a config that analyze
+      # reads, and a version skew fails the job outright ("Loaded a
+      # configuration file for version X, but running version Y"). Ungrouped,
+      # Dependabot opens one PR per path and each is unmergeable on its own.
+      # Group them so both SHAs move in a single commit.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
+      # Everything else travels together too: fewer PRs, and a shared runtime
+      # bump (e.g. the Node 20 → 24 migration) lands atomically rather than
+      # leaving the workflow set half-migrated.
+      actions:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "github/codeql-action*"
 
   - package-ecosystem: pip
     directory: /ai-osint-tool
