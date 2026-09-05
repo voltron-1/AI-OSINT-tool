@@ -2,8 +2,7 @@ name: Lint
 
 # Ported from Suburban_SOC. Always-on style/type gate on every PR and push to
 # main with NO path filter, so no change skips every automated check. Repo
-# content lives under ai-osint-tool/; tools run from the repo root so future
-# top-level files are covered too.
+# tools run from the repo root so every tracked file is covered.
 on:
   pull_request:
   push:
@@ -85,12 +84,12 @@ jobs:
 
       - run: pip install --quiet mypy==2.3.1
       - name: Run mypy on every tracked .py file
-        # mypy only discovers config in the cwd; once ai-osint-tool/pyproject.toml
+        # mypy only discovers config in the cwd; once pyproject.toml
         # exists, it is passed explicitly so its [tool.mypy] section is honoured.
         run: |
           cfg=()
-          if [ -f ai-osint-tool/pyproject.toml ]; then
-            cfg=(--config-file ai-osint-tool/pyproject.toml)
+          if [ -f pyproject.toml ]; then
+            cfg=(--config-file pyproject.toml)
           fi
           git ls-files -z '*.py' \
             | xargs -0 -r mypy "${cfg[@]}" --ignore-missing-imports --follow-imports=silent
@@ -124,13 +123,13 @@ jobs:
         # env_file: .env is mandatory in the compose file and POSTGRES_PASSWORD
         # uses the ${VAR:?} form, so `config` fails without them. The example
         # file holds placeholders only, and nothing is started.
-        run: cp ai-osint-tool/.env.example ai-osint-tool/.env
+        run: cp .env.example .env
 
       - name: Validate every compose file
         # -q is load-bearing: without it the fully interpolated config, including
         # the resolved POSTGRES_PASSWORD, is printed to a public job log.
         run: |
-          for f in ai-osint-tool/docker-compose*.yml; do
+          for f in docker-compose*.yml; do
             echo "validating $f"
             docker compose -f "$f" config -q
           done
