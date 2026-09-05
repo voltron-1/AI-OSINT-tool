@@ -1,0 +1,136 @@
+name: Lint
+
+# Ported from Suburban_SOC. Always-on style/type gate on every PR and push to
+# main with NO path filter, so no change skips every automated check. Repo
+# content lives under ai-osint-tool/; tools run from the repo root so future
+# top-level files are covered too.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    name: actionlint (workflows)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Lint every workflow (pinned uses, expression injection, shell)
+        run: >
+          docker run --rm -v "$PWD:/repo" -w /repo
+          rhysd/actionlint:1.7.12 -color
+
+  shellcheck:
+    name: shellcheck (bash)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SHELLCHECK_VERSION: v0.10.0
+      SHELLCHECK_SHA256: 6c881ab0698e4e6ea235245f22832860544f17ba386442fe7e9d629f8cbedf87
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install shellcheck (pinned release, checksum-verified)
+        run: |
+          set -euo pipefail
+          url="https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}"
+          curl -fsSL -o shellcheck.tar.xz \
+            "${url}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
+          echo "${SHELLCHECK_SHA256}  shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf shellcheck.tar.xz
+          sudo install -m 0755 \
+            "shellcheck-${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/shellcheck
+
+      - name: Run shellcheck on every tracked .sh/.bash file
+        # -z/-0 keep unusual filenames intact; -r skips cleanly while scripts/
+        # holds only a .gitkeep.
+        run: git ls-files -z '*.sh' '*.bash' | xargs -0 -r shellcheck -S warning
+
+  ruff:
+    name: ruff (python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      # Pinned: unpinned installs drift to whatever ruff ships that day and fail
+      # PRs on findings unrelated to the diff. Dependabot bumps it deliberately.
+      - run: pip install --quiet ruff==0.15.15
+      - run: ruff check .
+
+  mypy:
+    name: mypy (python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      - run: pip install --quiet mypy==2.3.1
+      - name: Run mypy on every tracked .py file
+        # mypy only discovers config in the cwd; once ai-osint-tool/pyproject.toml
+        # exists, it is passed explicitly so its [tool.mypy] section is honoured.
+        run: |
+          cfg=()
+          if [ -f ai-osint-tool/pyproject.toml ]; then
+            cfg=(--config-file ai-osint-tool/pyproject.toml)
+          fi
+          git ls-files -z '*.py' \
+            | xargs -0 -r mypy "${cfg[@]}" --ignore-missing-imports --follow-imports=silent
+
+  yamllint:
+    name: yamllint (configs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      - run: pip install --quiet yamllint==1.38.0
+      - name: Lint every YAML file in the repo (compose, workflows, configs)
+        run: yamllint -c .yamllint .
+
+  compose-config:
+    name: docker compose config (interpolation/syntax)
+    # Compose's variable-interpolation pass runs on the raw YAML before any
+    # shell-word splitting; a bare `$` anywhere in the file fails the whole
+    # file and nothing else here would catch it.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Provide the env file compose expects
+        # env_file: .env is mandatory in the compose file and POSTGRES_PASSWORD
+        # uses the ${VAR:?} form, so `config` fails without them. The example
+        # file holds placeholders only, and nothing is started.
+        run: cp ai-osint-tool/.env.example ai-osint-tool/.env
+
+      - name: Validate every compose file
+        # -q is load-bearing: without it the fully interpolated config, including
+        # the resolved POSTGRES_PASSWORD, is printed to a public job log.
+        run: |
+          for f in ai-osint-tool/docker-compose*.yml; do
+            echo "validating $f"
+            docker compose -f "$f" config -q
+          done

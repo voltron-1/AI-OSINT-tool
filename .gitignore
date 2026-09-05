@@ -1,0 +1,17 @@
+# Secrets — never commit a real env file anywhere in the tree
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+
+# OS / editor
+.DS_Store

@@ -1,0 +1,16 @@
+# Keeps the SHA-pinned actions and pinned Python tooling current. Without an
+# update channel, SHA pins turn into permanently frozen, eventually vulnerable
+# dependencies. Labels match the repo's existing label set.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]
+
+  - package-ecosystem: pip
+    directory: /ai-osint-tool
+    schedule:
+      interval: weekly
+    labels: [dependencies, python]

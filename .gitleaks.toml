@@ -1,0 +1,46 @@
+# gitleaks configuration — extends the default ruleset with project-specific
+# rules. Ported from Suburban_SOC; its Elasticsearch basic-auth rule is
+# replaced by two rules for this stack's Postgres credential: the env-var
+# assignment form and the connection-URI form the app will construct.
+title = "AI-OSINT-tool gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "postgres-inline-password"
+description = "Hard-coded POSTGRES_PASSWORD — read it from .env, never an inline literal"
+# Any non-whitespace value of 6+ chars. Variable references and documented
+# placeholders are excluded by the allowlist below, matched against the whole
+# match and anchored so a suffix on a placeholder (change_me_prod) still fires.
+regex = '''POSTGRES_PASSWORD\s*[=:]\s*["']?(\S{6,})'''
+keywords = ["postgres_password"]
+tags = ["password", "postgres"]
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''^POSTGRES_PASSWORD\s*[=:]\s*["']?\$''',                     # ${VAR} / $VAR references
+    '''^POSTGRES_PASSWORD\s*[=:]\s*["']?change_me["'`]?$''',        # the .env.example placeholder
+    '''^POSTGRES_PASSWORD\s*[=:]\s*["']?<[A-Za-z][^>]*>["'`]?$''',  # <your-password> style docs
+  ]
+
+[[rules]]
+id = "postgres-dsn-credential"
+description = "Credential embedded in a PostgreSQL connection URI — build the DSN from env at runtime"
+regex = '''postgres(?:ql)?://[A-Za-z0-9._%+-]+:([^@\s/'"]{4,})@'''
+keywords = ["postgres://", "postgresql://"]
+tags = ["password", "postgres", "dsn"]
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    ''':\$[^@]*@$''',           # :${POSTGRES_PASSWORD}@ / :$PASS@
+    ''':change_me@''',         # the .env.example placeholder
+    ''':<[A-Za-z][^>]*>@''',   # :<password>@ style docs
+  ]
+
+[[allowlists]]
+description = "Global allowlist"
+# Anchored: an unanchored substring would also exempt e.g. docs/.gitleaks.toml.md
+paths = ['''(^|/)\.gitleaks\.toml$''']

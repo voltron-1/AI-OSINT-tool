@@ -1,0 +1,104 @@
+name: Security Scan
+
+# Ported from Suburban_SOC. Scans this project's own container image, Python
+# dependencies, and IaC; fails on CRITICAL findings so a known-critical CVE
+# cannot merge. Runs on every PR and push to main (no path filter, so it can be
+# a required check) plus a weekly patch-cadence run. Inputs that do not exist
+# yet (no Dockerfile, no requirements file until plan step 0.6) are detected
+# after checkout and skipped with a warning rather than failing.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays 06:00 UTC — weekly patch cadence
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependencies:
+    name: Python dependency audit (pip-audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Find requirements files
+        id: reqs
+        # git pathspec '*' crosses directory separators, so this matches
+        # requirements files at any depth under ai-osint-tool/.
+        run: |
+          if git ls-files --error-unmatch 'ai-osint-tool/*requirements*.txt' >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No requirements file yet (plan step 0.6); nothing to audit"
+          fi
+
+      - if: steps.reqs.outputs.found == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version-file: .python-version
+
+      - if: steps.reqs.outputs.found == 'true'
+        run: pip install --quiet pip-audit==2.10.1
+
+      - if: steps.reqs.outputs.found == 'true'
+        name: Audit every requirements file
+        run: git ls-files -z 'ai-osint-tool/*requirements*.txt' | xargs -0 -r -n1 pip-audit -r
+
+  images:
+    name: Container image scan (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Check for the app Dockerfile
+        id: dockerfile
+        # ai-osint-tool/app is the only build context in docker-compose.yml.
+        run: |
+          if [ -f ai-osint-tool/app/Dockerfile ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No app/Dockerfile yet (plan step 0.6); image scan skipped"
+          fi
+
+      - if: steps.dockerfile.outputs.present == 'true'
+        name: Build app image
+        run: docker build -t ai-osint-tool/app:scan ai-osint-tool/app
+
+      - if: steps.dockerfile.outputs.present == 'true'
+        name: Trivy — fail on CRITICAL (fixed) vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          image-ref: ai-osint-tool/app:scan
+          severity: CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+
+  iac:
+    name: IaC misconfig scan (Trivy config)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Trivy config — Dockerfiles and IaC under ai-osint-tool/
+        # Trivy's misconfiguration scanner parses Dockerfiles, Kubernetes,
+        # Terraform and similar, not Compose files; the compose file's own
+        # syntax/interpolation check is lint.yml's compose-config job.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: ai-osint-tool
+          severity: CRITICAL,HIGH
+          exit-code: "1"
