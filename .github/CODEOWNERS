@@ -1,0 +1,13 @@
+# Change-management review routing (ported from Suburban_SOC). Single
+# maintainer today; enforced once branch protection enables "Require review
+# from Code Owners". Least-specific rule first: the last matching line wins.
+
+*                                   @voltron-1
+/ai-osint-tool/connectors/          @voltron-1
+/ai-osint-tool/app/                 @voltron-1
+/ai-osint-tool/docker-compose.yml   @voltron-1
+/ai-osint-tool/.env.example         @voltron-1
+/.github/                           @voltron-1
+/.gitleaks.toml                     @voltron-1
+/.yamllint                          @voltron-1
+/.python-version                    @voltron-1

@@ -1,0 +1,59 @@
+name: Delete Merged Branch
+
+# Ported from Suburban_SOC. Auto-delete a PR's head branch once the PR merges,
+# so merged feature branches don't pile up (the native "Automatically delete
+# head branches" repo setting needs admin access this workflow doesn't assume).
+on:
+  pull_request:
+    types: [closed]
+
+# Least privilege by default; only the delete job gets contents: write.
+permissions: {}
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Delete head branch
+        # Untrusted PR data is read through context.payload, never interpolated
+        # into the script with ${{ }} — keep it that way.
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref;
+            const defaultBranch = context.payload.repository.default_branch;
+            const protectedBranches = new Set([defaultBranch, 'main', 'master', 'develop']);
+
+            if (protectedBranches.has(branch)) {
+              core.info(`Skipping deletion of protected branch: ${branch}`);
+              return;
+            }
+
+            // A fork's head branch lives in the fork, not this repo.
+            if (pr.head.repo?.full_name !== context.repo.owner + '/' + context.repo.repo) {
+              core.info(`Skipping deletion of fork branch: ${branch}`);
+              return;
+            }
+
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branch}`,
+              });
+              core.info(`Deleted branch: ${branch}`);
+            } catch (error) {
+              // 404: already deleted. 422: GitHub refused the deletion (e.g. the
+              // ref is protected). Neither is worth failing the run; anything
+              // else is re-thrown so it stays visible.
+              if (error.status === 422 || error.status === 404) {
+                core.info(`Could not delete branch ${branch} (${error.status}): ${error.message}`);
+              } else {
+                throw error;
+              }
+            }

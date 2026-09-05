@@ -1,0 +1,19 @@
+# yamllint config (ported from Suburban_SOC) — relaxed to match repo
+# conventions rather than reformatting every file to the tool's defaults.
+extends: default
+
+ignore: |
+  .venv/
+  venv/
+  node_modules/
+  .ruff_cache/
+  .mypy_cache/
+
+rules:
+  document-start: disable
+  line-length:
+    max: 100
+  # GitHub Actions workflows use `on:` as a key; yamllint's truthy rule would
+  # otherwise flag it. Values are still checked.
+  truthy:
+    check-keys: false
