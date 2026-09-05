@@ -15,6 +15,16 @@
 #     labels: [dependencies, python]
 version: 2
 updates:
+  # Covers docker-compose.yml. The db image is pinned to a digest so an AGE
+  # rebuild cannot silently change the Postgres major underneath the stack
+  # (it already did once: `latest` moved to PG18 and relocated PGDATA). A pin
+  # without an update channel is just a frozen, eventually-vulnerable image.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

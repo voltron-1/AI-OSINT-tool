@@ -1,14 +1,34 @@
 services:
   db:
-    image: apache/age:latest
+    # Pinned by digest. AGE ships a moving `latest`, and it moved to a Postgres
+    # 18 base that relocated PGDATA — an unpinned tag turns that into a surprise
+    # failure on someone else's machine. The tag stays alongside the digest so
+    # it is readable and so Dependabot has a version to compare against; a
+    # digest with no tag is a pin nothing can ever bump.
+    # yamllint disable-line rule:line-length
+    image: apache/age:release_PG18_1.8.0@sha256:47a0b054c3663a3e64a25fc0c5a982f1b58348019274b326a691cdf77f78eb58
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-osint}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
       POSTGRES_DB: ${POSTGRES_DB:-osint}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      # PG18+ images key the data dir off the major version
+      # (PGDATA=/var/lib/postgresql/18/docker) and refuse to start against a
+      # mount at the old .../data path. Mount the parent, per upstream.
+      - db_data:/var/lib/postgresql
+      # Runs only on a fresh db_data volume. Enables AGE and creates the graph.
+      - ./app/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     ports:
       - "127.0.0.1:5432:5432"
+    healthcheck:
+      # -h 127.0.0.1 is deliberate: during initdb the entrypoint runs a
+      # socket-only server, so a default socket probe reports ready before the
+      # init script has run. A TCP probe only succeeds once the real server is up.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   ollama:
     image: ollama/ollama:latest
