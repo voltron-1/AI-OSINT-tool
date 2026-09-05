@@ -25,6 +25,13 @@ That is the plan's own 0.1 → 0.6 order, with the test harness last. It is not 
 
 ## LAST SESSION
 
+**2026-09-05** — layout and CI-config corrections. Still no application code.
+
+- [x] **Repo layout flattened** — [PR #63](https://github.com/voltron-1/AI-OSINT-tool/pull/63), merged `c9428cb`. Content sat one level down in `ai-osint-tool/` inside a repo of the same name, contradicting the implementation plan every issue is written against (it uses root-relative paths throughout). README, LICENSE, compose, `.env.example`, `app/`, `connectors/`, `docs/`, `scripts/` moved to the root; the two `.gitignore` files merged; every path rewritten in the workflows, CODEOWNERS, dependabot.yml and this doc. Two references would have broken outright: the compose job's env copy and Trivy's `scan-ref`.
+- [x] **Dependabot config fixed, two CI failures resolved** — both were defects in the `dependabot.yml` shipped in PR #55.
+  - CodeQL failed on [#56](https://github.com/voltron-1/AI-OSINT-tool/pull/56)/[#57](https://github.com/voltron-1/AI-OSINT-tool/pull/57): with no `groups:` block, Dependabot split `github/codeql-action/init` and `.../analyze` into one PR each, but they are one action at runtime and a version skew fails the job (`Loaded a configuration file for version X, but running version Y`). Grouped in `99f6aa4`; both PRs closed. Dependabot re-proposed the same bump correctly as [PR #62](https://github.com/voltron-1/AI-OSINT-tool/pull/62) — 4.36.2 → 4.37.9 with both SHAs in one commit, 12/12 checks green, merged `758551e`.
+  - The weekly `pip` run aborted every time (`Repo must contain a requirements.txt, setup.py, setup.cfg, pyproject.toml, or a Pipfile`). Ecosystem removed and kept as a comment; re-enabling it is now an acceptance criterion on [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7) (step 0.6).
+
 **2026-09-04** — project scaffolding session. No application code written; everything below is tracker, board, wiki, docs, and CI.
 
 - [x] **CI ported from Suburban_SOC** — [PR #55](https://github.com/voltron-1/AI-OSINT-tool/pull/55), squash-merged as `e4e6baf`. Five workflows (lint, secret-scan, security-scan, codeql, delete-merged-branch) plus CODEOWNERS, dependabot.yml, .gitleaks.toml, .yamllint, .python-version (3.12), root .gitignore. All 12 checks green on the PR and on main. Reviewed by security-auditor + code-reviewer; dispositions in `findings/20260904-ci-workflows-*.md`. Every action re-pinned to a Node 24 major — the source repo's Node 20 pins fail on current runners (Node 20 removed from hosted runners 2026-09-16).
@@ -150,15 +157,9 @@ Waiting on an external event or a prerequisite outside the current phase — not
 | Item | Waiting on |
 |---|---|
 | [M5 — Autonomous Investigation Mode](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) (issues [#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36)–[#41](https://github.com/voltron-1/AI-OSINT-tool/issues/41), [#60](https://github.com/voltron-1/AI-OSINT-tool/issues/60)) | M2 running against at least one real domain. The plan is explicit: the loop needs real findings to be worth building against, not a stub. |
-| pip-audit and Trivy image scan doing real work | A requirements file and `app/Dockerfile` (step 0.6, [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7)). Both jobs currently emit a `::warning::` and skip. |
+| pip-audit and Trivy image scan doing real work | A requirements file and `app/Dockerfile` (step 0.6, [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7)). Both jobs currently emit a `::warning::` and skip; the same issue re-enables Dependabot's `pip` ecosystem. |
 | Branch protection ruleset on `main` | Owner action. The CI checks exist but none is required, so a direct push to `main` bypasses them. Recommended required checks: `Lint / *`, `Secret Scan / gitleaks`, `Security Scan / *`, `CodeQL Advanced / Analyze (python)`. See `findings/20260904-ci-workflows-security.md`. |
 | "Require approval for all external contributors" | Owner action, repo setting. Public repo; a fork PR can execute code via `docker build` and mypy config discovery. |
-
-## OPEN PULL REQUESTS
-
-| PR | Source |
-|---|---|
-| [#56](https://github.com/voltron-1/AI-OSINT-tool/pull/56), [#57](https://github.com/voltron-1/AI-OSINT-tool/pull/57) | Dependabot — `github/codeql-action` 4.36.2 → 4.37.9. Opened automatically by the `dependabot.yml` added in PR #55; confirms the update channel works. |
 
 ## BLOCKED
 
