@@ -54,7 +54,7 @@ Gating: one phase per pass; stop and report after each; show the diff before any
   connector contract, data flow detail, related files.
 - Show both pages locally, then push to the wiki repo on approval.
 
-## Phase 4 — GitHub Actions CI (portable subset of Suburban_SOC)
+## Phase 4 — GitHub Actions CI (portable subset of Suburban_SOC)  [x] done 2026-09-04 → PR #55, merged e4e6baf
 - Port: codeql.yml (python), lint.yml (shellcheck, ruff, mypy, yamllint, compose-config;
   drop suricata-syntax), secret-scan.yml (gitleaks + .gitleaks.toml), security-scan.yml
   (pip-audit + Trivy IaC; image job gated on a Dockerfile existing), delete-merged-branch.yml.
@@ -62,6 +62,6 @@ Gating: one phase per pass; stop and report after each; show the diff before any
 - Skip: detections.yml, soar-tests.yml, reporting-coverage.yml (stack-specific).
 - Land on a feature branch; show the diff; open a PR on approval.
 
-## Phase 5 — planned_execution.md
+## Phase 5 — planned_execution.md  [x] done 2026-09-04 → d75ea01
 - Generate at repo root from the M1–M6 milestones/issues (Suburban_SOC shape: NEXT UP, LAST
   SESSION, status markers, DEFERRED). Present for approval; commit only after approval.
