@@ -2,7 +2,7 @@
 
 Date: 2026-09-04
 Reference conventions: voltron-1/Suburban_SOC (board #17, labels, milestone/issue format, wiki layout, GitHub Actions).
-Target: voltron-1/AI-OSINT-tool (repo content lives under `ai-osint-tool/`).
+Target: voltron-1/AI-OSINT-tool (repo content lives under the repo root).
 
 Gating: one phase per pass; stop and report after each; show the diff before any push, commit, or PR.
 
@@ -26,7 +26,7 @@ Gating: one phase per pass; stop and report after each; show the diff before any
 - Exit gate: `gh issue list` shows 27 issues, each with exactly one milestone; sub-issue links verified.
 
 ## Phase 1b — Restructure backlog to docs/implementation-plan.md  [x] done 2026-09-04
-- Trigger: user committed `ai-osint-tool/docs/implementation-plan.md` (4820537) after Phase 1; its
+- Trigger: user committed `docs/implementation-plan.md` (4820537) after Phase 1; its
   "Suggested milestones" and numbered steps superseded the README-derived M1–M6.
 - Milestones 1–6 renamed in place to the plan's six suggested milestones (Phase 0 / Phase 1 / Phase 2 /
   cross-cutting hardening / autonomous mode / Phase 3+4).
@@ -58,7 +58,7 @@ Gating: one phase per pass; stop and report after each; show the diff before any
 - Port: codeql.yml (python), lint.yml (shellcheck, ruff, mypy, yamllint, compose-config;
   drop suricata-syntax), secret-scan.yml (gitleaks + .gitleaks.toml), security-scan.yml
   (pip-audit + Trivy IaC; image job gated on a Dockerfile existing), delete-merged-branch.yml.
-- Adapt paths to `ai-osint-tool/`; Python 3.12 (README), not 3.11; CODEOWNERS = @voltron-1 only.
+- Adapt paths to the repo root; Python 3.12 (README), not 3.11; CODEOWNERS = @voltron-1 only.
 - Skip: detections.yml, soar-tests.yml, reporting-coverage.yml (stack-specific).
 - Land on a feature branch; show the diff; open a PR on approval.
 

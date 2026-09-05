@@ -1,5 +1,8 @@
 # CI Workflows Review — ci/github-actions-port
 
+> **Path note (2026-09-04, after this review):** the repo layout was flattened — everything under the
+> nested `ai-osint-tool/` directory moved to the repo root. Paths below are as they were at review time.
+
 Reviewer: code-reviewer sub-agent
 Date: 2026-09-04
 Scope: staged files on `ci/github-actions-port` (`git diff --cached`), compared against ported originals in `ssoc-gh/` and checked against live upstream action metadata (GitHub API) and Docker Compose docs.

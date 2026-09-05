@@ -1,5 +1,8 @@
 # CI Workflow Security Audit — 2026-09-04
 
+> **Path note (2026-09-04, after this review):** the repo layout was flattened — everything under the
+> nested `ai-osint-tool/` directory moved to the repo root. Paths below are as they were at review time.
+
 Source: security-auditor sub-agent, run against branch `ci/github-actions-port` (uncommitted). Persisted by the main session; the agent is read-only.
 
 **Totals:** 0 CRITICAL · 4 HIGH · 14 MEDIUM · 10 LOW · 5 INFO. Script injection and `pull_request_target` misuse explicitly verified absent.

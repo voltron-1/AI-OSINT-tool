@@ -2,7 +2,7 @@
 
 Sequenced execution view. Derived from the GitHub issue tracker + merged PR history;
 the [issue tracker](https://github.com/voltron-1/AI-OSINT-tool/issues) remains the source of truth for completion state.
-Milestone content derives from [`ai-osint-tool/docs/implementation-plan.md`](https://github.com/voltron-1/AI-OSINT-tool/blob/main/ai-osint-tool/docs/implementation-plan.md).
+Milestone content derives from [`docs/implementation-plan.md`](https://github.com/voltron-1/AI-OSINT-tool/blob/main/docs/implementation-plan.md).
 
 Status: `[ ]` todo · `[~]` in-progress · `[x]` done · `[!]` blocked
 
@@ -150,7 +150,7 @@ Waiting on an external event or a prerequisite outside the current phase — not
 | Item | Waiting on |
 |---|---|
 | [M5 — Autonomous Investigation Mode](https://github.com/voltron-1/AI-OSINT-tool/milestone/5) (issues [#36](https://github.com/voltron-1/AI-OSINT-tool/issues/36)–[#41](https://github.com/voltron-1/AI-OSINT-tool/issues/41), [#60](https://github.com/voltron-1/AI-OSINT-tool/issues/60)) | M2 running against at least one real domain. The plan is explicit: the loop needs real findings to be worth building against, not a stub. |
-| pip-audit and Trivy image scan doing real work | A requirements file and `ai-osint-tool/app/Dockerfile` (step 0.6, [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7)). Both jobs currently emit a `::warning::` and skip. |
+| pip-audit and Trivy image scan doing real work | A requirements file and `app/Dockerfile` (step 0.6, [#7](https://github.com/voltron-1/AI-OSINT-tool/issues/7)). Both jobs currently emit a `::warning::` and skip. |
 | Branch protection ruleset on `main` | Owner action. The CI checks exist but none is required, so a direct push to `main` bypasses them. Recommended required checks: `Lint / *`, `Secret Scan / gitleaks`, `Security Scan / *`, `CodeQL Advanced / Analyze (python)`. See `findings/20260904-ci-workflows-security.md`. |
 | "Require approval for all external contributors" | Owner action, repo setting. Public repo; a fork PR can execute code via `docker build` and mypy config discovery. |
 

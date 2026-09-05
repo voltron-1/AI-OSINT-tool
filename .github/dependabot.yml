@@ -1,6 +1,18 @@
 # Keeps the SHA-pinned actions and pinned Python tooling current. Without an
 # update channel, SHA pins turn into permanently frozen, eventually vulnerable
 # dependencies. Labels match the repo's existing label set.
+#
+# No pip ecosystem yet, deliberately: declared before a Python manifest exists,
+# Dependabot aborts the whole run ("Repo must contain a requirements.txt,
+# setup.py, setup.cfg, pyproject.toml, or a Pipfile"), which is a failed job
+# every week for no benefit. Plan step 0.6 (#7) creates pyproject.toml and
+# re-enables it:
+#
+#   - package-ecosystem: pip
+#     directory: /
+#     schedule:
+#       interval: weekly
+#     labels: [dependencies, python]
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -26,9 +38,3 @@ updates:
           - "*"
         exclude-patterns:
           - "github/codeql-action*"
-
-  - package-ecosystem: pip
-    directory: /ai-osint-tool
-    schedule:
-      interval: weekly
-    labels: [dependencies, python]
